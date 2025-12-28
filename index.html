@@ -1,10 +1,799 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-HK">
 <head>
-    <title>Talking Avatar</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 廣東話 Avatar (Cantonese)</title>
+    
+    <!-- Load Puter.js -->
+    <script src="https://js.puter.com/v2/"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f0f12;
+            --surface-color: #1e1e24;
+            --surface-highlight: #2a2a35;
+            --primary-color: #ff7979;
+            --primary-hover: #ff5252;
+            --secondary-color: #badc58;
+            --text-color: #f1f2f6;
+            --text-muted: #a4b0be;
+            --border-color: #333;
+            --glass-bg: rgba(30, 30, 36, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 50%, #1a1a20 0%, #0f0f12 100%);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        /* --- Header --- */
+        header {
+            padding: 1rem 1.5rem;
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h1 { font-size: 1.2rem; margin: 0; font-weight: 600; }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.3);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #666;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Icon Buttons */
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-color);
+        }
+
+        /* --- Main Layout --- */
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Left Side: Avatar Stage */
+        .avatar-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+            min-width: 300px;
+        }
+
+        /* Right Side: Chat Panel */
+        .chat-panel {
+            width: 400px;
+            background: var(--surface-color);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 5;
+            transition: transform 0.3s ease;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .clear-btn {
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        #chat-log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        /* Scrollbar Styling */
+        #chat-log::-webkit-scrollbar { width: 6px; }
+        #chat-log::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        #chat-log::-webkit-scrollbar-track { background: transparent; }
+
+        .message {
+            max-width: 90%;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .message.user { 
+            align-self: flex-end; 
+            background: var(--surface-highlight);
+            color: var(--text-color);
+            padding: 10px 14px;
+            border-radius: 12px 12px 0 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .message.ai { 
+            align-self: flex-start; 
+            background: rgba(255, 121, 121, 0.1); 
+            color: var(--text-color);
+            padding: 10px 14px;
+            border-radius: 12px 12px 12px 0;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .message.system { 
+            align-self: center; 
+            color: var(--text-muted); 
+            font-size: 0.8rem; 
+            text-align: center; 
+            padding: 5px;
+            opacity: 0.8;
+        }
+
+        /* --- Avatar Styles --- */
+        .avatar-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .avatar-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 20px rgba(255, 121, 121, 0.3));
+            transition: transform 0.3s ease;
+        }
+
+        /* Footer Controls (Floating on Avatar Stage) */
+        .controls-area {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        button#toggle-btn {
+            background-color: var(--primary-color);
+            color: #000;
+            border: none;
+            padding: 16px 48px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 121, 121, 0.4);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        button#toggle-btn:hover { transform: scale(1.02); background-color: var(--primary-hover); }
+        button#toggle-btn:active { transform: scale(0.98); }
+        
+        button#toggle-btn.active { 
+            background-color: var(--surface-highlight); 
+            color: var(--text-color);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+
+        /* --- Settings Modal --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--surface-color);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            padding: 24px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.open .modal { transform: translateY(0); }
+
+        .modal h2 { margin-top: 0; color: var(--primary-color); }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+        
+        .form-control {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+
+        .form-control:focus { outline: none; border-color: var(--primary-color); }
+
+        /* Select Dropdown Styling */
+        select.form-control {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a4b0be' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            display: block;
+        }
+
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.05); color: var(--text-color); }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--secondary-color);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 200;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* --- Animations --- */
+        .is-idle .avatar-svg { animation: float 6s ease-in-out infinite; }
+        .is-listening .avatar-svg { animation: breathe 2s ease-in-out infinite; filter: drop-shadow(0 0 30px rgba(186, 220, 88, 0.6)); }
+        .is-listening .avatar-svg #avatar-core { fill: #badc58; }
+        .is-processing .avatar-svg { animation: spin-slow 2s linear infinite; }
+        .is-speaking .avatar-svg { animation: talk-bounce 0.2s infinite alternate; filter: drop-shadow(0 0 40px rgba(255, 121, 121, 0.8)); }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes talk-bounce { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main { flex-direction: column; }
+            .avatar-stage { flex: 1; min-height: 40vh; }
+            .chat-panel { width: 100%; height: 50vh; border-left: none; border-top: 1px solid var(--border-color); }
+            .avatar-container { width: 150px; height: 150px; margin-bottom: 10px; }
+            .controls-area { bottom: 20px; padding: 0 20px; }
+            button#toggle-btn { padding: 12px 24px; font-size: 1rem; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Talking Avatar</h1>
-    <p>Welcome to the Talking Avatar project!</p>
+
+    <header>
+        <div class="brand">
+            <!-- Simple SVG Icon for Logo -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color)">
+                <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <h1>AI 廣東話助手</h1>
+        </div>
+        <div class="header-controls">
+            <div class="status-badge">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">準備中</span>
+            </div>
+            <button id="settings-btn" class="icon-btn" title="設定">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Avatar Visual Stage -->
+        <div id="avatar-stage" class="avatar-stage is-idle">
+            <div class="avatar-container">
+                <svg class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="40" fill="#2a2a2a" stroke="#444" stroke-width="2" />
+                    <circle cx="50" cy="50" r="25" fill="#ff7979" id="avatar-core" />
+                    <g id="eyes" fill="#121212">
+                        <circle cx="40" cy="45" r="5" />
+                        <circle cx="60" cy="45" r="5" />
+                    </g>
+                    <path id="mouth" d="M 40 60 Q 50 70 60 60" stroke="#121212" stroke-width="3" fill="none" opacity="0.5" />
+                </svg>
+            </div>
+            
+            <div class="controls-area">
+                <button id="toggle-btn">開始對話</button>
+            </div>
+        </div>
+
+        <!-- Chat Sidebar -->
+        <aside class="chat-panel">
+            <div class="chat-header">
+                <span>對話記錄</span>
+                <button id="clear-chat-btn" class="clear-btn">清除</button>
+            </div>
+            <section id="chat-log">
+                <div class="message ai">你好呀！撳「開始對話」就可以開始傾計㗎喇。</div>
+            </section>
+        </aside>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>系統設定</h2>
+            
+            <!-- Model Selection -->
+            <div class="form-group">
+                <label for="model-select">AI 模型 (Model)</label>
+                <select id="model-select" class="form-control">
+                    <option value="gpt-4o-mini" selected>GPT-4o Mini (推薦 - 快速)</option>
+                    <option value="gpt-4o">GPT-4o (聰明但較慢)</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (舊版)</option>
+                    <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (高質素)</option>
+                </select>
+                <span class="help-text">選擇 "GPT-4o Mini" 可以獲得最快嘅回應速度。</span>
+            </div>
+
+            <!-- System Prompt -->
+            <div class="form-group">
+                <label for="system-prompt">System Prompt (人設指令)</label>
+                <textarea id="system-prompt" class="form-control" placeholder="輸入你希望 AI 展現嘅性格或行為..." rows="5"></textarea>
+                <span class="help-text">這段文字會傳送比 Puter.js AI，以此決定 AI 嘅回應風格。</span>
+            </div>
+
+            <div class="modal-actions">
+                <button id="cancel-settings" class="btn-secondary">取消</button>
+                <button id="save-settings" class="btn-primary">儲存設定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">設定已儲存！</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- DOM Elements ---
+            const ELEMENTS = {
+                stage: document.getElementById('avatar-stage'),
+                statusText: document.getElementById('status-text'),
+                statusDot: document.getElementById('status-dot'),
+                chatLog: document.getElementById('chat-log'),
+                toggleBtn: document.getElementById('toggle-btn'),
+                settingsBtn: document.getElementById('settings-btn'),
+                clearChatBtn: document.getElementById('clear-chat-btn'),
+                settingsModal: document.getElementById('settings-modal'),
+                saveSettingsBtn: document.getElementById('save-settings'),
+                cancelSettingsBtn: document.getElementById('cancel-settings'),
+                systemPromptInput: document.getElementById('system-prompt'),
+                modelSelect: document.getElementById('model-select'),
+                toast: document.getElementById('toast')
+            };
+
+            // --- State Management ---
+            const STATE = {
+                IDLE: 'idle',
+                LISTENING: 'listening',
+                PROCESSING: 'processing',
+                SPEAKING: 'speaking'
+            };
+
+            let currentState = STATE.IDLE;
+            let recognition = null;
+            let cantoneseVoice = null;
+            
+            // Default Config
+            const DEFAULT_PROMPT = "你係一個好樂於助人嘅 AI 助手。請全程用廣東話回應，用字要地道，語氣要友善。回答要簡潔清晰，大概 50 字以內。";
+            const DEFAULT_MODEL = "gpt-4o-mini"; // Default to fast model
+            
+            let conversationContext = ""; // Dynamic history
+            let selectedModel = DEFAULT_MODEL;
+
+            // --- Initialization ---
+
+            // Load Settings from LocalStorage
+            function loadSettings() {
+                // Load Prompt
+                const savedPrompt = localStorage.getItem('cantonesAI_prompt');
+                ELEMENTS.systemPromptInput.value = savedPrompt ? savedPrompt : DEFAULT_PROMPT;
+
+                // Load Model
+                const savedModel = localStorage.getItem('cantonesAI_model');
+                if (savedModel) {
+                    ELEMENTS.modelSelect.value = savedModel;
+                    selectedModel = savedModel;
+                } else {
+                    selectedModel = DEFAULT_MODEL;
+                }
+
+                resetConversationContext();
+            }
+
+            function resetConversationContext() {
+                conversationContext = ELEMENTS.systemPromptInput.value + "\n\n";
+            }
+
+            loadSettings();
+
+            // --- 1. Voice Engine Setup ---
+            function loadVoices() {
+                const voices = window.speechSynthesis.getVoices();
+                
+                // Priority 1: Hong Kong Cantonese
+                cantoneseVoice = voices.find(v => v.lang.includes('zh-HK') || v.lang.includes('yue-HK'));
+                
+                // Priority 2: Fallback to Chinese
+                if (!cantoneseVoice) {
+                    cantoneseVoice = voices.find(v => v.lang.includes('zh'));
+                    if (cantoneseVoice) console.warn("Using Mandarin voice as fallback.");
+                } else {
+                    console.log("Cantonese voice loaded:", cantoneseVoice.name);
+                }
+            }
+
+            loadVoices();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+            }
+
+            function speakNative(text) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                if (cantoneseVoice) utterance.voice = cantoneseVoice;
+                
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+
+                utterance.onend = () => finishSpeaking();
+                utterance.onerror = (e) => finishSpeaking();
+
+                window.speechSynthesis.speak(utterance);
+            }
+
+            // --- 2. Speech Recognition Setup ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            function initSpeechRecognition() {
+                if (!SpeechRecognition) return false;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'zh-HK'; 
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    handleUserInput(transcript);
+                };
+
+                recognition.onend = () => {
+                    if (currentState === STATE.LISTENING) {
+                        setState(STATE.PROCESSING);
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    if (event.error === 'no-speech') {
+                        if (currentState === STATE.LISTENING) startListening();
+                    } else {
+                        appendMessage('system', `Mic Error: ${event.error}`);
+                        stopSession();
+                    }
+                };
+                return true;
+            }
+
+            // --- 3. Core Interaction Logic ---
+            function setState(newState) {
+                ELEMENTS.stage.classList.remove(`is-${currentState}`);
+                currentState = newState;
+                ELEMENTS.stage.classList.add(`is-${currentState}`);
+
+                switch (newState) {
+                    case STATE.IDLE:
+                        ELEMENTS.statusText.innerText = "準備中";
+                        ELEMENTS.statusDot.style.backgroundColor = "#666";
+                        break;
+                    case STATE.LISTENING:
+                        ELEMENTS.statusText.innerText = "聽緊您講...";
+                        ELEMENTS.statusDot.style.backgroundColor = "#badc58";
+                        break;
+                    case STATE.PROCESSING:
+                        ELEMENTS.statusText.innerText = "谂緊...";
+                        ELEMENTS.statusDot.style.backgroundColor = "#feca57";
+                        break;
+                    case STATE.SPEAKING:
+                        ELEMENTS.statusText.innerText = "講緊...";
+                        ELEMENTS.statusDot.style.backgroundColor = "#ff7979";
+                        break;
+                }
+            }
+
+            function startSession() {
+                if (!initSpeechRecognition()) {
+                    appendMessage('system', "抱歉，呢個瀏覽器唔支援語音辨識。");
+                    return;
+                }
+                
+                ELEMENTS.toggleBtn.innerText = "停止對話";
+                ELEMENTS.toggleBtn.classList.add('active');
+                
+                // If chat is empty aside from greeting, reset context
+                if (ELEMENTS.chatLog.children.length <= 1) {
+                    resetConversationContext();
+                }
+                
+                setState(STATE.LISTENING);
+                startListening();
+            }
+
+            function stopSession() {
+                if (recognition) recognition.stop();
+                window.speechSynthesis.cancel();
+                setState(STATE.IDLE);
+                ELEMENTS.toggleBtn.innerText = "開始對話";
+                ELEMENTS.toggleBtn.classList.remove('active');
+            }
+
+            function startListening() {
+                if (!recognition) return;
+                try { recognition.start(); } catch (e) { console.log(e); }
+            }
+
+            function finishSpeaking() {
+                if (currentState !== STATE.SPEAKING) return;
+                setState(STATE.LISTENING);
+                startListening();
+            }
+
+            function appendMessage(sender, text) {
+                const div = document.createElement('div');
+                div.className = `message ${sender}`;
+                div.textContent = text;
+                ELEMENTS.chatLog.appendChild(div);
+                // Auto scroll to bottom
+                ELEMENTS.chatLog.scrollTop = ELEMENTS.chatLog.scrollHeight;
+            }
+
+            // --- 4. AI Brain (Puter.js) ---
+            async function handleUserInput(text) {
+                appendMessage('user', text);
+                if (recognition) recognition.stop();
+                setState(STATE.PROCESSING);
+
+                let aiMessage = "";
+
+                try {
+                    if (typeof puter !== 'undefined') {
+                        // Construct prompt with history
+                        const prompt = conversationContext + `User: ${text}\nAI:`;
+                        
+                        // Prepare options including the model
+                        const options = {
+                            model: selectedModel
+                        };
+                        
+                        console.log(`Sending request to model: ${selectedModel}...`);
+                        const response = await puter.ai.chat(prompt, options);
+                        
+                        if (typeof response === 'string') {
+                            aiMessage = response;
+                        } else if (response.message && response.message.content) {
+                            aiMessage = response.message.content;
+                        } else {
+                            throw new Error("Unknown response format");
+                        }
+
+                        // Update context history
+                        conversationContext += `User: ${text}\nAI: ${aiMessage}\n`;
+
+                    } else {
+                        throw new Error("No Puter library");
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    aiMessage = "哎呀，我連唔到個腦呀，試多次喇。";
+                }
+
+                appendMessage('ai', aiMessage);
+                setState(STATE.SPEAKING);
+                speakNative(aiMessage); 
+            }
+
+            // --- 5. Event Listeners & Settings UI ---
+
+            // Toggle Main Mic
+            ELEMENTS.toggleBtn.addEventListener('click', () => {
+                if (currentState === STATE.IDLE) startSession();
+                else stopSession();
+            });
+
+            // Clear Chat
+            ELEMENTS.clearChatBtn.addEventListener('click', () => {
+                ELEMENTS.chatLog.innerHTML = '<div class="message ai">對話已清除。可以重新開始喇！</div>';
+                resetConversationContext();
+            });
+
+            // Open Settings
+            ELEMENTS.settingsBtn.addEventListener('click', () => {
+                ELEMENTS.settingsModal.classList.add('open');
+                // Stop session if active to prevent overlap issues
+                if (currentState !== STATE.IDLE) stopSession();
+            });
+
+            // Close Settings
+            function closeSettings() {
+                ELEMENTS.settingsModal.classList.remove('open');
+            }
+
+            ELEMENTS.cancelSettingsBtn.addEventListener('click', closeSettings);
+
+            // Click outside modal to close
+            ELEMENTS.settingsModal.addEventListener('click', (e) => {
+                if (e.target === ELEMENTS.settingsModal) closeSettings();
+            });
+
+            // Save Settings
+            ELEMENTS.saveSettingsBtn.addEventListener('click', () => {
+                const newPrompt = ELEMENTS.systemPromptInput.value.trim();
+                const newModel = ELEMENTS.modelSelect.value;
+                
+                if (newPrompt) {
+                    localStorage.setItem('cantonesAI_prompt', newPrompt);
+                }
+                
+                localStorage.setItem('cantonesAI_model', newModel);
+                selectedModel = newModel;
+
+                resetConversationContext(); // Reset context with new settings
+                closeSettings();
+                showToast();
+                
+                // Add a system message to confirm
+                appendMessage('system', `設定已更新 (Model: ${newModel})`);
+            });
+
+            function showToast() {
+                ELEMENTS.toast.classList.add('show');
+                setTimeout(() => {
+                    ELEMENTS.toast.classList.remove('show');
+                }, 2000);
+            }
+
+        });
+    </script>
 </body>
 </html>
