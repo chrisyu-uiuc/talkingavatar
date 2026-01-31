@@ -1,0 +1,181 @@
+[1mdiff --git a/index.html b/index.html[m
+[1mindex e610b0a..984d119 100644[m
+[1m--- a/index.html[m
+[1m+++ b/index.html[m
+[36m@@ -539,13 +539,14 @@[m
+             let currentState = STATE.IDLE;[m
+             let recognition = null;[m
+             let activeVoice = null;[m
+[32m+[m[32m            let isPuterTTSAvailable = false; // Track if Puter.js TTS is available[m
+ [m
+             // Default Config[m
+             const DEFAULT_PROMPT = "You are a helpful AI assistant. Please respond in English throughout. Be concise and clear, keep responses under 50 words.";[m
+             const DEFAULT_MODEL = "gpt-4o-mini"; // Default to fast model[m
+             const DEFAULT_VOICE_PROVIDER = "openai";[m
+             const DEFAULT_VOICE = "nova";[m
+[31m-            [m
+[32m+[m
+             let conversationContext = ""; // Dynamic history[m
+             let selectedModel = DEFAULT_MODEL;[m
+             let selectedVoiceProvider = DEFAULT_VOICE_PROVIDER;[m
+[36m@@ -594,8 +595,53 @@[m
+                 conversationContext = ELEMENTS.systemPromptInput.value + "\n\n";[m
+             }[m
+ [m
+[32m+[m[32m            // Check if Puter.js TTS is available[m
+[32m+[m[32m            async function checkPuterTTSAvailability() {[m
+[32m+[m[32m                try {[m
+[32m+[m[32m                    // Wait a bit for Puter.js to load[m
+[32m+[m[32m                    await new Promise(resolve => setTimeout(resolve, 500));[m
+[32m+[m
+[32m+[m[32m                    if (typeof puter === 'undefined' || !puter.ai) {[m
+[32m+[m[32m                        console.log('Puter.js AI not available');[m
+[32m+[m[32m                        return false;[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    if (typeof puter.ai.txt2speech !== 'function') {[m
+[32m+[m[32m                        console.log('Puter.ai.txt2speech not available');[m
+[32m+[m[32m                        return false;[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    // Try a simple test with timeout[m
+[32m+[m[32m                    const timeoutPromise = new Promise((_, reject) =>[m
+[32m+[m[32m                        setTimeout(() => reject(new Error('Timeout')), 5000)[m
+[32m+[m[32m                    );[m
+[32m+[m
+[32m+[m[32m                    const testPromise = puter.ai.txt2speech('test', { voice: 'alloy' });[m
+[32m+[m
+[32m+[m[32m                    const testAudioBlob = await Promise.race([testPromise, timeoutPromise]);[m
+[32m+[m[32m                    if (!testAudioBlob) {[m
+[32m+[m[32m                        console.log('Puter.ai.txt2speech returned no audio');[m
+[32m+[m[32m                        return false;[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    console.log('Puter.js TTS is available');[m
+[32m+[m[32m                    return true;[m
+[32m+[m[32m                } catch (error) {[m
+[32m+[m[32m                    console.log('Puter.js TTS check failed:', error.message);[m
+[32m+[m[32m                    return false;[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m
+             loadSettings();[m
+ [m
+[32m+[m[32m            // Check Puter.js TTS availability in background[m
+[32m+[m[32m            checkPuterTTSAvailability().then(available => {[m
+[32m+[m[32m                isPuterTTSAvailable = available;[m
+[32m+[m[32m                if (!available && selectedVoiceProvider !== 'native') {[m
+[32m+[m[32m                    console.warn('Puter.js TTS not available, will use native voice');[m
+[32m+[m[32m                }[m
+[32m+[m[32m            });[m
+[32m+[m
+             // --- 1. Voice Engine Setup ---[m
+             [m
+             function updateVoiceOptions() {[m
+[36m@@ -692,10 +738,13 @@[m
+             }[m
+ [m
+             async function speak(text) {[m
+[31m-                if (selectedVoiceProvider === 'openai') {[m
+[31m-                    await speakWithPuter(text, 'openai');[m
+[31m-                } else if (selectedVoiceProvider === 'aws-polly') {[m
+[31m-                    await speakWithPuter(text, 'aws-polly');[m
+[32m+[m[32m                if (selectedVoiceProvider === 'openai' || selectedVoiceProvider === 'aws-polly') {[m
+[32m+[m[32m                    if (isPuterTTSAvailable) {[m
+[32m+[m[32m                        await speakWithPuter(text, selectedVoiceProvider);[m
+[32m+[m[32m                    } else {[m
+[32m+[m[32m                        // Silently use native voice if Puter.js TTS is not available[m
+[32m+[m[32m                        speakNative(text);[m
+[32m+[m[32m                    }[m
+                 } else {[m
+                     speakNative(text);[m
+                 }[m
+[36m@@ -703,10 +752,26 @@[m
+ [m
+             async function speakWithPuter(text, provider) {[m
+                 try {[m
+[31m-                    const options = {[m
+[31m-                        voice: selectedVoice[m
+[31m-                    };[m
+[32m+[m[32m                    // Check if Puter is available[m
+[32m+[m[32m                    if (typeof puter === 'undefined' || !puter.ai) {[m
+[32m+[m[32m                        console.warn('Puter.js AI not available');[m
+[32m+[m[32m                        throw new Error('Puter.js not available');[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    // Check if txt2speech function exists[m
+[32m+[m[32m                    if (typeof puter.ai.txt2speech !== 'function') {[m
+[32m+[m[32m                        console.warn('Puter.ai.txt2speech not available');[m
+[32m+[m[32m                        throw new Error('txt2speech not available');[m
+[32m+[m[32m                    }[m
+ [m
+[32m+[m[32m                    const options = {};[m
+[32m+[m
+[32m+[m[32m                    // Add voice if specified[m
+[32m+[m[32m                    if (selectedVoice && selectedVoice !== 'native') {[m
+[32m+[m[32m                        options.voice = selectedVoice;[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    // Add provider-specific options[m
+                     if (provider === 'openai') {[m
+                         options.provider = 'openai';[m
+                         options.model = 'tts-1';[m
+[36m@@ -715,29 +780,33 @@[m
+                         options.engine = 'neural';[m
+                     }[m
+ [m
+[31m-                    console.log(`Speaking with ${provider}, voice: ${selectedVoice}`);[m
+[31m-                    [m
+[32m+[m[32m                    console.log(`Speaking with ${provider}, options:`, options);[m
+[32m+[m
+                     const audioBlob = await puter.ai.txt2speech(text, options);[m
+[31m-                    [m
+[32m+[m
+[32m+[m[32m                    if (!audioBlob) {[m
+[32m+[m[32m                        throw new Error('No audio blob returned from txt2speech');[m
+[32m+[m[32m                    }[m
+[32m+[m
+                     const audioUrl = URL.createObjectURL(audioBlob);[m
+                     const audio = new Audio(audioUrl);[m
+[31m-                    [m
+[32m+[m
+                     audio.onended = () => {[m
+                         URL.revokeObjectURL(audioUrl);[m
+                         finishSpeaking();[m
+                     };[m
+[31m-                    [m
+[32m+[m
+                     audio.onerror = (e) => {[m
+                         console.error('Audio playback error:', e);[m
+                         URL.revokeObjectURL(audioUrl);[m
+                         finishSpeaking();[m
+                     };[m
+[31m-                    [m
+[32m+[m
+                     await audio.play();[m
+[31m-                    [m
+[32m+[m
+                 } catch (error) {[m
+                     console.error('TTS error:', error);[m
+[31m-                    appendMessage('system', 'Voice synthesis error, falling back to native voice');[m
+[32m+[m[32m                    appendMessage('system', `Voice synthesis error (${provider}), falling back to native voice`);[m
+                     speakNative(text);[m
+                 }[m
+             }[m
+[36m@@ -967,6 +1036,16 @@[m
+                 localStorage.setItem('englishAI_voice', newVoice);[m
+                 selectedVoice = newVoice;[m
+ [m
+[32m+[m[32m                // Re-check Puter.js TTS availability if user selected OpenAI or AWS Polly[m
+[32m+[m[32m                if (newVoiceProvider === 'openai' || newVoiceProvider === 'aws-polly') {[m
+[32m+[m[32m                    checkPuterTTSAvailability().then(available => {[m
+[32m+[m[32m                        isPuterTTSAvailable = available;[m
+[32m+[m[32m                        if (!available) {[m
+[32m+[m[32m                            console.warn('Puter.js TTS not available, will use native voice');[m
+[32m+[m[32m                        }[m
+[32m+[m[32m                    });[m
+[32m+[m[32m                }[m
+[32m+[m
+                 resetConversationContext();[m
+                 closeSettings();[m
+                 showToast();[m
