@@ -539,13 +539,14 @@
             let currentState = STATE.IDLE;
             let recognition = null;
             let activeVoice = null;
+            let isPuterTTSAvailable = false; // Track if Puter.js TTS is available
 
             // Default Config
             const DEFAULT_PROMPT = "You are a helpful AI assistant. Please respond in English throughout. Be concise and clear, keep responses under 50 words.";
             const DEFAULT_MODEL = "gpt-4o-mini"; // Default to fast model
             const DEFAULT_VOICE_PROVIDER = "openai";
             const DEFAULT_VOICE = "nova";
-            
+
             let conversationContext = ""; // Dynamic history
             let selectedModel = DEFAULT_MODEL;
             let selectedVoiceProvider = DEFAULT_VOICE_PROVIDER;
@@ -594,7 +595,52 @@
                 conversationContext = ELEMENTS.systemPromptInput.value + "\n\n";
             }
 
+            // Check if Puter.js TTS is available
+            async function checkPuterTTSAvailability() {
+                try {
+                    // Wait a bit for Puter.js to load
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    if (typeof puter === 'undefined' || !puter.ai) {
+                        console.log('Puter.js AI not available');
+                        return false;
+                    }
+
+                    if (typeof puter.ai.txt2speech !== 'function') {
+                        console.log('Puter.ai.txt2speech not available');
+                        return false;
+                    }
+
+                    // Try a simple test with timeout
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Timeout')), 5000)
+                    );
+
+                    const testPromise = puter.ai.txt2speech('test', { voice: 'alloy' });
+
+                    const testAudioBlob = await Promise.race([testPromise, timeoutPromise]);
+                    if (!testAudioBlob) {
+                        console.log('Puter.ai.txt2speech returned no audio');
+                        return false;
+                    }
+
+                    console.log('Puter.js TTS is available');
+                    return true;
+                } catch (error) {
+                    console.log('Puter.js TTS check failed:', error.message);
+                    return false;
+                }
+            }
+
             loadSettings();
+
+            // Check Puter.js TTS availability in background
+            checkPuterTTSAvailability().then(available => {
+                isPuterTTSAvailable = available;
+                if (!available && selectedVoiceProvider !== 'native') {
+                    console.warn('Puter.js TTS not available, will use native voice');
+                }
+            });
 
             // --- 1. Voice Engine Setup ---
             
@@ -692,10 +738,13 @@
             }
 
             async function speak(text) {
-                if (selectedVoiceProvider === 'openai') {
-                    await speakWithPuter(text, 'openai');
-                } else if (selectedVoiceProvider === 'aws-polly') {
-                    await speakWithPuter(text, 'aws-polly');
+                if (selectedVoiceProvider === 'openai' || selectedVoiceProvider === 'aws-polly') {
+                    if (isPuterTTSAvailable) {
+                        await speakWithPuter(text, selectedVoiceProvider);
+                    } else {
+                        // Silently use native voice if Puter.js TTS is not available
+                        speakNative(text);
+                    }
                 } else {
                     speakNative(text);
                 }
@@ -703,10 +752,26 @@
 
             async function speakWithPuter(text, provider) {
                 try {
-                    const options = {
-                        voice: selectedVoice
-                    };
+                    // Check if Puter is available
+                    if (typeof puter === 'undefined' || !puter.ai) {
+                        console.warn('Puter.js AI not available');
+                        throw new Error('Puter.js not available');
+                    }
 
+                    // Check if txt2speech function exists
+                    if (typeof puter.ai.txt2speech !== 'function') {
+                        console.warn('Puter.ai.txt2speech not available');
+                        throw new Error('txt2speech not available');
+                    }
+
+                    const options = {};
+
+                    // Add voice if specified
+                    if (selectedVoice && selectedVoice !== 'native') {
+                        options.voice = selectedVoice;
+                    }
+
+                    // Add provider-specific options
                     if (provider === 'openai') {
                         options.provider = 'openai';
                         options.model = 'tts-1';
@@ -715,29 +780,33 @@
                         options.engine = 'neural';
                     }
 
-                    console.log(`Speaking with ${provider}, voice: ${selectedVoice}`);
-                    
+                    console.log(`Speaking with ${provider}, options:`, options);
+
                     const audioBlob = await puter.ai.txt2speech(text, options);
-                    
+
+                    if (!audioBlob) {
+                        throw new Error('No audio blob returned from txt2speech');
+                    }
+
                     const audioUrl = URL.createObjectURL(audioBlob);
                     const audio = new Audio(audioUrl);
-                    
+
                     audio.onended = () => {
                         URL.revokeObjectURL(audioUrl);
                         finishSpeaking();
                     };
-                    
+
                     audio.onerror = (e) => {
                         console.error('Audio playback error:', e);
                         URL.revokeObjectURL(audioUrl);
                         finishSpeaking();
                     };
-                    
+
                     await audio.play();
-                    
+
                 } catch (error) {
                     console.error('TTS error:', error);
-                    appendMessage('system', 'Voice synthesis error, falling back to native voice');
+                    appendMessage('system', `Voice synthesis error (${provider}), falling back to native voice`);
                     speakNative(text);
                 }
             }
@@ -966,6 +1035,16 @@
 
                 localStorage.setItem('englishAI_voice', newVoice);
                 selectedVoice = newVoice;
+
+                // Re-check Puter.js TTS availability if user selected OpenAI or AWS Polly
+                if (newVoiceProvider === 'openai' || newVoiceProvider === 'aws-polly') {
+                    checkPuterTTSAvailability().then(available => {
+                        isPuterTTSAvailable = available;
+                        if (!available) {
+                            console.warn('Puter.js TTS not available, will use native voice');
+                        }
+                    });
+                }
 
                 resetConversationContext();
                 closeSettings();
