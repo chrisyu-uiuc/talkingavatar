@@ -476,10 +476,11 @@
                 <label for="voice-provider">Voice Provider</label>
                 <select id="voice-provider" class="form-control">
                     <option value="openai">OpenAI TTS (Recommended)</option>
+                    <option value="elevenlabs">ElevenLabs (High Quality)</option>
                     <option value="aws-polly">AWS Polly (Neural)</option>
                     <option value="native">Browser Native (Basic)</option>
                 </select>
-                <span class="help-text">OpenAI provides the highest quality voices.</span>
+                <span class="help-text">OpenAI and ElevenLabs provide the highest quality voices.</span>
             </div>
 
             <!-- Voice Selection -->
@@ -647,9 +648,9 @@
             function updateVoiceOptions() {
                 const provider = ELEMENTS.voiceProviderSelect.value;
                 const voiceSelect = ELEMENTS.voiceSelect;
-                
+
                 voiceSelect.innerHTML = '';
-                
+
                 if (provider === 'openai') {
                     const openaiVoices = [
                         { value: 'nova', label: 'Nova (Friendly & Warm)' },
@@ -660,6 +661,21 @@
                         { value: 'onyx', label: 'Onyx (Deep & Authoritative)' }
                     ];
                     openaiVoices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = voice.value;
+                        option.textContent = voice.label;
+                        voiceSelect.appendChild(option);
+                    });
+                } else if (provider === 'elevenlabs') {
+                    const elevenlabsVoices = [
+                        { value: '21m00Tcm4TlvDq8ikWAM', label: 'Rachel (Female, US - Default)' },
+                        { value: 'AZnzlk1XvdvUeBnXmlld', label: 'Domi (Female, US)' },
+                        { value: 'EXAVITQu4vr4xnSDxMaL', label: 'Bella (Female, US)' },
+                        { value: 'ErXwobaYiN0LL8XY1bPG', label: 'Antoni (Male, US)' },
+                        { value: 'TxGEqnHWrfWFTfGW9XjX', label: 'Josh (Male, US)' },
+                        { value: 'MF3mGyEYCl7XYWbV9V6O', label: 'Arnold (Male, US)' }
+                    ];
+                    elevenlabsVoices.forEach(voice => {
                         const option = document.createElement('option');
                         option.value = voice.value;
                         option.textContent = voice.label;
@@ -689,7 +705,7 @@
                         voiceSelect.appendChild(option);
                     });
                 }
-                
+
                 if (selectedVoice) {
                     voiceSelect.value = selectedVoice;
                 }
@@ -738,7 +754,7 @@
             }
 
             async function speak(text) {
-                if (selectedVoiceProvider === 'openai' || selectedVoiceProvider === 'aws-polly') {
+                if (selectedVoiceProvider === 'openai' || selectedVoiceProvider === 'aws-polly' || selectedVoiceProvider === 'elevenlabs') {
                     if (isPuterTTSAvailable) {
                         await speakWithPuter(text, selectedVoiceProvider);
                     } else {
@@ -778,6 +794,10 @@
                     } else if (provider === 'aws-polly') {
                         options.provider = 'aws-polly';
                         options.engine = 'neural';
+                    } else if (provider === 'elevenlabs') {
+                        options.provider = 'elevenlabs';
+                        options.model = 'eleven_multilingual_v2';
+                        options.output_format = 'mp3_44100_128';
                     }
 
                     console.log(`Speaking with ${provider}, options:`, options);
@@ -1036,8 +1056,8 @@
                 localStorage.setItem('englishAI_voice', newVoice);
                 selectedVoice = newVoice;
 
-                // Re-check Puter.js TTS availability if user selected OpenAI or AWS Polly
-                if (newVoiceProvider === 'openai' || newVoiceProvider === 'aws-polly') {
+                // Re-check Puter.js TTS availability if user selected OpenAI, AWS Polly, or ElevenLabs
+                if (newVoiceProvider === 'openai' || newVoiceProvider === 'aws-polly' || newVoiceProvider === 'elevenlabs') {
                     checkPuterTTSAvailability().then(available => {
                         isPuterTTSAvailable = available;
                         if (!available) {
