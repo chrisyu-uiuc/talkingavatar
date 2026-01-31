@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 廣東話 Avatar (Cantonese)</title>
+    <title>AI English Avatar</title>
     
     <!-- Load Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
@@ -26,7 +26,7 @@
         * { box-sizing: border-box; }
 
         body {
-            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bg-color);
             background-image: radial-gradient(circle at 50% 50%, #1a1a20 0%, #0f0f12 100%);
             color: var(--text-color);
@@ -402,14 +402,14 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color)">
                 <circle cx="12" cy="12" r="10"/>
             </svg>
-            <h1>AI 廣東話助手</h1>
+            <h1>AI English Assistant</h1>
         </div>
         <div class="header-controls">
             <div class="status-badge">
                 <div class="status-dot" id="status-dot"></div>
-                <span id="status-text">準備中</span>
+                <span id="status-text">Ready</span>
             </div>
-            <button id="settings-btn" class="icon-btn" title="設定">
+            <button id="settings-btn" class="icon-btn" title="Settings">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
         </div>
@@ -431,18 +431,18 @@
             </div>
             
             <div class="controls-area">
-                <button id="toggle-btn">開始對話</button>
+                <button id="toggle-btn">Start Conversation</button>
             </div>
         </div>
 
         <!-- Chat Sidebar -->
         <aside class="chat-panel">
             <div class="chat-header">
-                <span>對話記錄</span>
-                <button id="clear-chat-btn" class="clear-btn">清除</button>
+                <span>Chat History</span>
+                <button id="clear-chat-btn" class="clear-btn">Clear</button>
             </div>
             <section id="chat-log">
-                <div class="message ai">你好呀！撳「開始對話」就可以開始傾計㗎喇。</div>
+                <div class="message ai">Hello! Click "Start Conversation" to begin chatting.</div>
             </section>
         </aside>
     </main>
@@ -450,36 +450,36 @@
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal-overlay">
         <div class="modal">
-            <h2>系統設定</h2>
-            
+            <h2>System Settings</h2>
+
             <!-- Model Selection -->
             <div class="form-group">
-                <label for="model-select">AI 模型 (Model)</label>
+                <label for="model-select">AI Model</label>
                 <select id="model-select" class="form-control">
-                    <option value="gpt-4o-mini" selected>GPT-4o Mini (推薦 - 快速)</option>
-                    <option value="gpt-4o">GPT-4o (聰明但較慢)</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (舊版)</option>
-                    <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (高質素)</option>
+                    <option value="gpt-4o-mini" selected>GPT-4o Mini (Recommended - Fast)</option>
+                    <option value="gpt-4o">GPT-4o (Smart but Slower)</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Legacy)</option>
+                    <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (High Quality)</option>
                 </select>
-                <span class="help-text">選擇 "GPT-4o Mini" 可以獲得最快嘅回應速度。</span>
+                <span class="help-text">Select "GPT-4o Mini" for the fastest response speed.</span>
             </div>
 
             <!-- System Prompt -->
             <div class="form-group">
-                <label for="system-prompt">System Prompt (人設指令)</label>
-                <textarea id="system-prompt" class="form-control" placeholder="輸入你希望 AI 展現嘅性格或行為..." rows="5"></textarea>
-                <span class="help-text">這段文字會傳送比 Puter.js AI，以此決定 AI 嘅回應風格。</span>
+                <label for="system-prompt">System Prompt (Personality)</label>
+                <textarea id="system-prompt" class="form-control" placeholder="Enter the personality or behavior you want AI to display..." rows="5"></textarea>
+                <span class="help-text">This text will be sent to Puter.js AI to determine the AI's response style.</span>
             </div>
 
             <div class="modal-actions">
-                <button id="cancel-settings" class="btn-secondary">取消</button>
-                <button id="save-settings" class="btn-primary">儲存設定</button>
+                <button id="cancel-settings" class="btn-secondary">Cancel</button>
+                <button id="save-settings" class="btn-primary">Save Settings</button>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast">設定已儲存！</div>
+    <div id="toast">Settings Saved!</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -512,9 +512,9 @@
             let currentState = STATE.IDLE;
             let recognition = null;
             let cantoneseVoice = null;
-            
+
             // Default Config
-            const DEFAULT_PROMPT = "你係一個好樂於助人嘅 AI 助手。請全程用廣東話回應，用字要地道，語氣要友善。回答要簡潔清晰，大概 50 字以內。";
+            const DEFAULT_PROMPT = "You are a helpful AI assistant. Please respond in English throughout. Be concise and clear, keep responses under 50 words.";
             const DEFAULT_MODEL = "gpt-4o-mini"; // Default to fast model
             
             let conversationContext = ""; // Dynamic history
@@ -525,11 +525,11 @@
             // Load Settings from LocalStorage
             function loadSettings() {
                 // Load Prompt
-                const savedPrompt = localStorage.getItem('cantonesAI_prompt');
+                const savedPrompt = localStorage.getItem('englishAI_prompt');
                 ELEMENTS.systemPromptInput.value = savedPrompt ? savedPrompt : DEFAULT_PROMPT;
 
                 // Load Model
-                const savedModel = localStorage.getItem('cantonesAI_model');
+                const savedModel = localStorage.getItem('englishAI_model');
                 if (savedModel) {
                     ELEMENTS.modelSelect.value = savedModel;
                     selectedModel = savedModel;
@@ -549,16 +549,16 @@
             // --- 1. Voice Engine Setup ---
             function loadVoices() {
                 const voices = window.speechSynthesis.getVoices();
-                
-                // Priority 1: Hong Kong Cantonese
-                cantoneseVoice = voices.find(v => v.lang.includes('zh-HK') || v.lang.includes('yue-HK'));
-                
-                // Priority 2: Fallback to Chinese
+
+                // Priority 1: English (US or UK)
+                cantoneseVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en-GB'));
+
+                // Priority 2: Fallback to any English
                 if (!cantoneseVoice) {
-                    cantoneseVoice = voices.find(v => v.lang.includes('zh'));
-                    if (cantoneseVoice) console.warn("Using Mandarin voice as fallback.");
+                    cantoneseVoice = voices.find(v => v.lang.includes('en'));
+                    if (cantoneseVoice) console.warn("Using alternative English voice as fallback.");
                 } else {
-                    console.log("Cantonese voice loaded:", cantoneseVoice.name);
+                    console.log("English voice loaded:", cantoneseVoice.name);
                 }
             }
 
@@ -589,7 +589,7 @@
                 if (!SpeechRecognition) return false;
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
-                recognition.lang = 'zh-HK'; 
+                recognition.lang = 'en-US';
                 recognition.interimResults = false;
                 recognition.maxAlternatives = 1;
 
@@ -623,19 +623,19 @@
 
                 switch (newState) {
                     case STATE.IDLE:
-                        ELEMENTS.statusText.innerText = "準備中";
+                        ELEMENTS.statusText.innerText = "Ready";
                         ELEMENTS.statusDot.style.backgroundColor = "#666";
                         break;
                     case STATE.LISTENING:
-                        ELEMENTS.statusText.innerText = "聽緊您講...";
+                        ELEMENTS.statusText.innerText = "Listening...";
                         ELEMENTS.statusDot.style.backgroundColor = "#badc58";
                         break;
                     case STATE.PROCESSING:
-                        ELEMENTS.statusText.innerText = "谂緊...";
+                        ELEMENTS.statusText.innerText = "Thinking...";
                         ELEMENTS.statusDot.style.backgroundColor = "#feca57";
                         break;
                     case STATE.SPEAKING:
-                        ELEMENTS.statusText.innerText = "講緊...";
+                        ELEMENTS.statusText.innerText = "Speaking...";
                         ELEMENTS.statusDot.style.backgroundColor = "#ff7979";
                         break;
                 }
@@ -643,11 +643,11 @@
 
             function startSession() {
                 if (!initSpeechRecognition()) {
-                    appendMessage('system', "抱歉，呢個瀏覽器唔支援語音辨識。");
+                    appendMessage('system', "Sorry, this browser does not support speech recognition.");
                     return;
                 }
-                
-                ELEMENTS.toggleBtn.innerText = "停止對話";
+
+                ELEMENTS.toggleBtn.innerText = "Stop Conversation";
                 ELEMENTS.toggleBtn.classList.add('active');
                 
                 // If chat is empty aside from greeting, reset context
@@ -663,7 +663,7 @@
                 if (recognition) recognition.stop();
                 window.speechSynthesis.cancel();
                 setState(STATE.IDLE);
-                ELEMENTS.toggleBtn.innerText = "開始對話";
+                ELEMENTS.toggleBtn.innerText = "Start Conversation";
                 ELEMENTS.toggleBtn.classList.remove('active');
             }
 
@@ -725,7 +725,7 @@
 
                 } catch (err) {
                     console.error(err);
-                    aiMessage = "哎呀，我連唔到個腦呀，試多次喇。";
+                    aiMessage = "Oops, I can't connect to my brain. Please try again.";
                 }
 
                 appendMessage('ai', aiMessage);
@@ -743,7 +743,7 @@
 
             // Clear Chat
             ELEMENTS.clearChatBtn.addEventListener('click', () => {
-                ELEMENTS.chatLog.innerHTML = '<div class="message ai">對話已清除。可以重新開始喇！</div>';
+                ELEMENTS.chatLog.innerHTML = '<div class="message ai">Conversation cleared. You can start fresh!</div>';
                 resetConversationContext();
             });
 
@@ -770,20 +770,20 @@
             ELEMENTS.saveSettingsBtn.addEventListener('click', () => {
                 const newPrompt = ELEMENTS.systemPromptInput.value.trim();
                 const newModel = ELEMENTS.modelSelect.value;
-                
+
                 if (newPrompt) {
-                    localStorage.setItem('cantonesAI_prompt', newPrompt);
+                    localStorage.setItem('englishAI_prompt', newPrompt);
                 }
-                
-                localStorage.setItem('cantonesAI_model', newModel);
+
+                localStorage.setItem('englishAI_model', newModel);
                 selectedModel = newModel;
 
                 resetConversationContext(); // Reset context with new settings
                 closeSettings();
                 showToast();
-                
+
                 // Add a system message to confirm
-                appendMessage('system', `設定已更新 (Model: ${newModel})`);
+                appendMessage('system', `Settings updated (Model: ${newModel})`);
             });
 
             function showToast() {
