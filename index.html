@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI English Avatar</title>
+    <title>廣東話AI助手</title>
     
     <!-- Load Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
@@ -402,7 +402,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color)">
                 <circle cx="12" cy="12" r="10"/>
             </svg>
-            <h1>AI English Assistant</h1>
+            <h1>廣東話AI助手</h1>
         </div>
         <div class="header-controls">
             <div class="status-badge">
@@ -431,18 +431,18 @@
             </div>
             
             <div class="controls-area">
-                <button id="toggle-btn">Start Conversation</button>
+                <button id="toggle-btn">開始對話</button>
             </div>
         </div>
 
         <!-- Chat Sidebar -->
         <aside class="chat-panel">
             <div class="chat-header">
-                <span>Chat History</span>
-                <button id="clear-chat-btn" class="clear-btn">Clear</button>
+                <span>聊天記錄</span>
+                <button id="clear-chat-btn" class="clear-btn">清除</button>
             </div>
             <section id="chat-log">
-                <div class="message ai">Hello! Click "Start Conversation" to begin chatting.</div>
+                <div class="message ai">你好！按「開始對話」嚟開始傾偈啦。</div>
             </section>
         </aside>
     </main>
@@ -450,11 +450,11 @@
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal-overlay">
         <div class="modal">
-            <h2>System Settings</h2>
+            <h2>系統設定</h2>
 
             <!-- Model Selection -->
             <div class="form-group">
-                <label for="model-select">AI Model</label>
+                <label for="model-select">AI模型</label>
                 <select id="model-select" class="form-control">
                     <option value="gpt-4o-mini" selected>GPT-4o Mini (Recommended - Fast)</option>
                     <option value="gpt-4o">GPT-4o (Smart but Slower)</option>
@@ -466,26 +466,26 @@
 
             <!-- System Prompt -->
             <div class="form-group">
-                <label for="system-prompt">System Prompt (Personality)</label>
-                <textarea id="system-prompt" class="form-control" placeholder="Enter the personality or behavior you want AI to display..." rows="5"></textarea>
-                <span class="help-text">This text will be sent to Puter.js AI to determine the AI's response style.</span>
+                <label for="system-prompt">系統提示 (個性)</label>
+                <textarea id="system-prompt" class="form-control" placeholder="輸入你想要AI顯示嘅個性或行為..." rows="5"></textarea>
+                <span class="help-text">呢個文字會發送到Puter.js AI來決定AI嘅回應風格。</span>
             </div>
 
             <!-- Voice Provider Selection -->
             <div class="form-group">
-                <label for="voice-provider">Voice Provider</label>
+                <label for="voice-provider">語音供應商</label>
                 <select id="voice-provider" class="form-control">
-                    <option value="openai">OpenAI TTS (Recommended)</option>
-                    <option value="elevenlabs">ElevenLabs (High Quality)</option>
-                    <option value="aws-polly">AWS Polly (Neural)</option>
-                    <option value="native">Browser Native (Basic)</option>
+                    <option value="native" selected>瀏覽器原生 (基本)</option>
+                    <option value="openai">OpenAI TTS (推薦)</option>
+                    <option value="elevenlabs">ElevenLabs (高質量)</option>
+                    <option value="aws-polly">AWS Polly (神經)</option>
                 </select>
-                <span class="help-text">OpenAI and ElevenLabs provide the highest quality voices.</span>
+                <span class="help-text">推薦使用瀏覽器原生語音或OpenAI。</span>
             </div>
 
             <!-- Voice Selection -->
             <div class="form-group">
-                <label for="voice-select">Voice</label>
+                <label for="voice-select">語音選擇</label>
                 <select id="voice-select" class="form-control">
                     <option value="nova">Nova (Friendly & Warm)</option>
                     <option value="alloy">Alloy (Balanced & Natural)</option>
@@ -543,10 +543,10 @@
             let isPuterTTSAvailable = false; // Track if Puter.js TTS is available
 
             // Default Config
-            const DEFAULT_PROMPT = "You are a helpful AI assistant. Please respond in English throughout. Be concise and clear, keep responses under 50 words.";
+            const DEFAULT_PROMPT = "你係一個有用嘅AI助手。請用廣東話回應，保持簡潔清晰，50字以內回應。";
             const DEFAULT_MODEL = "gpt-4o-mini"; // Default to fast model
-            const DEFAULT_VOICE_PROVIDER = "openai";
-            const DEFAULT_VOICE = "nova";
+            const DEFAULT_VOICE_PROVIDER = "native";
+            const DEFAULT_VOICE = "native";
 
             let conversationContext = ""; // Dynamic history
             let selectedModel = DEFAULT_MODEL;
@@ -557,12 +557,12 @@
 
             // Load Settings from LocalStorage
             function loadSettings() {
-                // Load Prompt
-                const savedPrompt = localStorage.getItem('englishAI_prompt') || localStorage.getItem('cantoneseAI_prompt');
+                // Load Prompt - try Cantonese first, then English fallback
+                const savedPrompt = localStorage.getItem('cantoneseAI_prompt') || localStorage.getItem('englishAI_prompt');
                 ELEMENTS.systemPromptInput.value = savedPrompt ? savedPrompt : DEFAULT_PROMPT;
 
                 // Load Model
-                const savedModel = localStorage.getItem('englishAI_model') || localStorage.getItem('cantoneseAI_model');
+                const savedModel = localStorage.getItem('cantoneseAI_model') || localStorage.getItem('englishAI_model');
                 if (savedModel) {
                     ELEMENTS.modelSelect.value = savedModel;
                     selectedModel = savedModel;
@@ -571,7 +571,7 @@
                 }
 
                 // Load Voice Provider
-                const savedVoiceProvider = localStorage.getItem('englishAI_voiceProvider');
+                const savedVoiceProvider = localStorage.getItem('cantoneseAI_voiceProvider') || localStorage.getItem('englishAI_voiceProvider');
                 if (savedVoiceProvider) {
                     ELEMENTS.voiceProviderSelect.value = savedVoiceProvider;
                     selectedVoiceProvider = savedVoiceProvider;
@@ -584,7 +584,7 @@
                 updateVoiceOptions();
 
                 // Load Voice
-                const savedVoice = localStorage.getItem('englishAI_voice');
+                const savedVoice = localStorage.getItem('cantoneseAI_voice') || localStorage.getItem('englishAI_voice');
                 if (savedVoice) {
                     ELEMENTS.voiceSelect.value = savedVoice;
                     selectedVoice = savedVoice;
@@ -717,6 +717,7 @@
                 const voices = window.speechSynthesis.getVoices();
                 
                 const preferredVoices = [
+                    "Google 日本語", // Google Japanese (better than English for Cantonese)
                     "Google US English",
                     "Microsoft Aria Online (Natural) - English (United States)",
                     "Microsoft Jenny Online (Natural) - English (United States)",
@@ -727,11 +728,23 @@
 
                 let foundVoice = null;
 
-                for (let name of preferredVoices) {
-                    foundVoice = voices.find(v => v.name === name);
-                    if (foundVoice) break;
+                // First try to find Cantonese or Chinese voices
+                foundVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'zh-TW' || v.lang === 'zh-CN');
+                
+                // If no Chinese voices, try Japanese (closer pronunciation)
+                if (!foundVoice) {
+                    foundVoice = voices.find(v => v.lang === 'ja-JP');
                 }
 
+                // If still no suitable voice, try the preferred English voices
+                if (!foundVoice) {
+                    for (let name of preferredVoices) {
+                        foundVoice = voices.find(v => v.name === name);
+                        if (foundVoice) break;
+                    }
+                }
+
+                // Fallback to any English voice if nothing else found
                 if (!foundVoice) {
                     foundVoice = voices.find(v => (v.name.includes('Natural') || v.name.includes('Google')) && v.lang.startsWith('en'));
                 }
@@ -837,8 +850,20 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 
-                if (activeVoice) utterance.voice = activeVoice;
-                utterance.lang = 'en-US';
+                if (activeVoice) {
+                    utterance.voice = activeVoice;
+                    // Set language to match the voice if available
+                    if (activeVoice.lang.startsWith('zh')) {
+                        utterance.lang = activeVoice.lang;
+                    } else if (activeVoice.lang === 'ja-JP') {
+                        utterance.lang = 'ja-JP'; // Japanese often works better for Cantonese pronunciation
+                    } else {
+                        utterance.lang = 'en-US'; // Default fallback
+                    }
+                } else {
+                    // No specific voice found, try to use a suitable language
+                    utterance.lang = 'zh-TW'; // Traditional Chinese as Cantonese fallback
+                }
                 
                 utterance.rate = 1.0;
                 utterance.pitch = 1.0;
@@ -856,7 +881,24 @@
                 if (!SpeechRecognition) return false;
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
-                recognition.lang = 'en-US';
+                
+                // Set Cantonese recognition with fallback
+                const cantoneseLangs = ['zh-HK', 'zh-TW', 'zh-CN', 'zh'];
+                let selectedLang = 'zh-HK'; // Default to Hong Kong Cantonese
+                
+                // Try to find a supported language
+                for (let lang of cantoneseLangs) {
+                    try {
+                        recognition.lang = lang;
+                        selectedLang = lang;
+                        console.log(`Speech recognition set to ${lang}`);
+                        break;
+                    } catch (e) {
+                        console.log(`${lang} not supported, trying next...`);
+                        continue;
+                    }
+                }
+                
                 recognition.interimResults = false;
                 recognition.maxAlternatives = 1;
 
@@ -875,7 +917,7 @@
                     if (event.error === 'no-speech') {
                         if (currentState === STATE.LISTENING) startListening();
                     } else {
-                        appendMessage('system', `Mic Error: ${event.error}`);
+                        appendMessage('system', `麥克風錯誤: ${event.error}`);
                         stopSession();
                     }
                 };
@@ -890,19 +932,19 @@
 
                 switch (newState) {
                     case STATE.IDLE:
-                        ELEMENTS.statusText.innerText = "Ready";
+                        ELEMENTS.statusText.innerText = "準備好";
                         ELEMENTS.statusDot.style.backgroundColor = "#666";
                         break;
                     case STATE.LISTENING:
-                        ELEMENTS.statusText.innerText = "Listening...";
+                        ELEMENTS.statusText.innerText = "傾聽中...";
                         ELEMENTS.statusDot.style.backgroundColor = "#badc58";
                         break;
                     case STATE.PROCESSING:
-                        ELEMENTS.statusText.innerText = "Thinking...";
+                        ELEMENTS.statusText.innerText = "思考中...";
                         ELEMENTS.statusDot.style.backgroundColor = "#feca57";
                         break;
                     case STATE.SPEAKING:
-                        ELEMENTS.statusText.innerText = "Speaking...";
+                        ELEMENTS.statusText.innerText = "講緊話...";
                         ELEMENTS.statusDot.style.backgroundColor = "#ff7979";
                         break;
                 }
@@ -910,11 +952,11 @@
 
             function startSession() {
                 if (!initSpeechRecognition()) {
-                    appendMessage('system', "Sorry, this browser does not support speech recognition.");
+                    appendMessage('system', "sorry，你嘅瀏覽器唔支援語音識別。");
                     return;
                 }
 
-                ELEMENTS.toggleBtn.innerText = "Stop Conversation";
+                ELEMENTS.toggleBtn.innerText = "停止對話";
                 ELEMENTS.toggleBtn.classList.add('active');
                 
                 // If chat is empty aside from greeting, reset context
@@ -930,7 +972,7 @@
                 if (recognition) recognition.stop();
                 window.speechSynthesis.cancel();
                 setState(STATE.IDLE);
-                ELEMENTS.toggleBtn.innerText = "Start Conversation";
+                ELEMENTS.toggleBtn.innerText = "開始對話";
                 ELEMENTS.toggleBtn.classList.remove('active');
             }
 
@@ -992,7 +1034,7 @@
 
                 } catch (err) {
                     console.error(err);
-                    aiMessage = "Oops, I can't connect to my brain. Please try again.";
+                    aiMessage = "哎呀，連接唔到AI大腦，請再試一次。";
                 }
 
                 appendMessage('ai', aiMessage);
@@ -1010,7 +1052,7 @@
 
             // Clear Chat
             ELEMENTS.clearChatBtn.addEventListener('click', () => {
-                ELEMENTS.chatLog.innerHTML = '<div class="message ai">Conversation cleared. You can start fresh!</div>';
+                ELEMENTS.chatLog.innerHTML = '<div class="message ai">對話已清除。你可以重新開始！</div>';
                 resetConversationContext();
             });
 
@@ -1046,16 +1088,16 @@
                 const newVoice = ELEMENTS.voiceSelect.value;
 
                 if (newPrompt) {
-                    localStorage.setItem('englishAI_prompt', newPrompt);
+                    localStorage.setItem('cantoneseAI_prompt', newPrompt);
                 }
 
-                localStorage.setItem('englishAI_model', newModel);
+                localStorage.setItem('cantoneseAI_model', newModel);
                 selectedModel = newModel;
 
-                localStorage.setItem('englishAI_voiceProvider', newVoiceProvider);
+                localStorage.setItem('cantoneseAI_voiceProvider', newVoiceProvider);
                 selectedVoiceProvider = newVoiceProvider;
 
-                localStorage.setItem('englishAI_voice', newVoice);
+                localStorage.setItem('cantoneseAI_voice', newVoice);
                 selectedVoice = newVoice;
 
                 // Re-check Puter.js TTS availability if user selected OpenAI, AWS Polly, or ElevenLabs
@@ -1072,7 +1114,7 @@
                 closeSettings();
                 showToast();
 
-                appendMessage('system', `Settings updated (Model: ${newModel}, Voice: ${newVoice})`);
+                appendMessage('system', `設定已更新 (模型: ${newModel}, 語音: ${newVoice})`);
             });
 
             function showToast() {
