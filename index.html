@@ -410,7 +410,7 @@
                 <span id="status-text">Ready</span>
             </div>
             <button id="settings-btn" class="icon-btn" title="Settings">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
         </div>
     </header>
@@ -511,7 +511,7 @@
 
             let currentState = STATE.IDLE;
             let recognition = null;
-            let cantoneseVoice = null;
+            let activeVoice = null;
 
             // Default Config
             const DEFAULT_PROMPT = "You are a helpful AI assistant. Please respond in English throughout. Be concise and clear, keep responses under 50 words.";
@@ -525,11 +525,11 @@
             // Load Settings from LocalStorage
             function loadSettings() {
                 // Load Prompt
-                const savedPrompt = localStorage.getItem('englishAI_prompt');
+                const savedPrompt = localStorage.getItem('englishAI_prompt') || localStorage.getItem('cantoneseAI_prompt');
                 ELEMENTS.systemPromptInput.value = savedPrompt ? savedPrompt : DEFAULT_PROMPT;
 
                 // Load Model
-                const savedModel = localStorage.getItem('englishAI_model');
+                const savedModel = localStorage.getItem('englishAI_model') || localStorage.getItem('cantoneseAI_model');
                 if (savedModel) {
                     ELEMENTS.modelSelect.value = savedModel;
                     selectedModel = savedModel;
@@ -549,16 +549,43 @@
             // --- 1. Voice Engine Setup ---
             function loadVoices() {
                 const voices = window.speechSynthesis.getVoices();
+                
+                // Priority list for high-quality English voices
+                const preferredVoices = [
+                    "Google US English",
+                    "Microsoft Aria Online (Natural) - English (United States)",
+                    "Microsoft Jenny Online (Natural) - English (United States)",
+                    "Microsoft Guy Online (Natural) - English (United States)",
+                    "Samantha",
+                    "Alex"
+                ];
 
-                // Priority 1: English (US or UK)
-                cantoneseVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en-GB'));
+                let foundVoice = null;
 
-                // Priority 2: Fallback to any English
-                if (!cantoneseVoice) {
-                    cantoneseVoice = voices.find(v => v.lang.includes('en'));
-                    if (cantoneseVoice) console.warn("Using alternative English voice as fallback.");
-                } else {
-                    console.log("English voice loaded:", cantoneseVoice.name);
+                // Try to find a preferred voice
+                for (let name of preferredVoices) {
+                    foundVoice = voices.find(v => v.name === name);
+                    if (foundVoice) break;
+                }
+
+                // Fallback 1: Any "Natural" or "Neural" or "Google" voice
+                if (!foundVoice) {
+                    foundVoice = voices.find(v => (v.name.includes('Natural') || v.name.includes('Google')) && v.lang.startsWith('en'));
+                }
+
+                // Fallback 2: Any en-US voice
+                if (!foundVoice) {
+                    foundVoice = voices.find(v => v.lang === 'en-US');
+                }
+
+                // Fallback 3: Any English voice
+                if (!foundVoice) {
+                    foundVoice = voices.find(v => v.lang.startsWith('en'));
+                }
+
+                if (foundVoice) {
+                    activeVoice = foundVoice;
+                    console.log("English voice loaded:", activeVoice.name);
                 }
             }
 
@@ -571,7 +598,8 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 
-                if (cantoneseVoice) utterance.voice = cantoneseVoice;
+                if (activeVoice) utterance.voice = activeVoice;
+                utterance.lang = 'en-US';
                 
                 utterance.rate = 1.0;
                 utterance.pitch = 1.0;
