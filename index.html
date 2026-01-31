@@ -471,6 +471,31 @@
                 <span class="help-text">This text will be sent to Puter.js AI to determine the AI's response style.</span>
             </div>
 
+            <!-- Voice Provider Selection -->
+            <div class="form-group">
+                <label for="voice-provider">Voice Provider</label>
+                <select id="voice-provider" class="form-control">
+                    <option value="openai">OpenAI TTS (Recommended)</option>
+                    <option value="aws-polly">AWS Polly (Neural)</option>
+                    <option value="native">Browser Native (Basic)</option>
+                </select>
+                <span class="help-text">OpenAI provides the highest quality voices.</span>
+            </div>
+
+            <!-- Voice Selection -->
+            <div class="form-group">
+                <label for="voice-select">Voice</label>
+                <select id="voice-select" class="form-control">
+                    <option value="nova">Nova (Friendly & Warm)</option>
+                    <option value="alloy">Alloy (Balanced & Natural)</option>
+                    <option value="echo">Echo (Clear & Professional)</option>
+                    <option value="shimmer">Shimmer (Soft & Gentle)</option>
+                    <option value="fable">Fable (Expressive)</option>
+                    <option value="onyx">Onyx (Deep & Authoritative)</option>
+                </select>
+                <span class="help-text">Choose your preferred voice character.</span>
+            </div>
+
             <div class="modal-actions">
                 <button id="cancel-settings" class="btn-secondary">Cancel</button>
                 <button id="save-settings" class="btn-primary">Save Settings</button>
@@ -498,6 +523,8 @@
                 cancelSettingsBtn: document.getElementById('cancel-settings'),
                 systemPromptInput: document.getElementById('system-prompt'),
                 modelSelect: document.getElementById('model-select'),
+                voiceProviderSelect: document.getElementById('voice-provider'),
+                voiceSelect: document.getElementById('voice-select'),
                 toast: document.getElementById('toast')
             };
 
@@ -516,9 +543,13 @@
             // Default Config
             const DEFAULT_PROMPT = "You are a helpful AI assistant. Please respond in English throughout. Be concise and clear, keep responses under 50 words.";
             const DEFAULT_MODEL = "gpt-4o-mini"; // Default to fast model
+            const DEFAULT_VOICE_PROVIDER = "openai";
+            const DEFAULT_VOICE = "nova";
             
             let conversationContext = ""; // Dynamic history
             let selectedModel = DEFAULT_MODEL;
+            let selectedVoiceProvider = DEFAULT_VOICE_PROVIDER;
+            let selectedVoice = DEFAULT_VOICE;
 
             // --- Initialization ---
 
@@ -537,6 +568,25 @@
                     selectedModel = DEFAULT_MODEL;
                 }
 
+                // Load Voice Provider
+                const savedVoiceProvider = localStorage.getItem('englishAI_voiceProvider');
+                if (savedVoiceProvider) {
+                    ELEMENTS.voiceProviderSelect.value = savedVoiceProvider;
+                    selectedVoiceProvider = savedVoiceProvider;
+                } else {
+                    selectedVoiceProvider = DEFAULT_VOICE_PROVIDER;
+                }
+
+                // Load Voice
+                const savedVoice = localStorage.getItem('englishAI_voice');
+                if (savedVoice) {
+                    ELEMENTS.voiceSelect.value = savedVoice;
+                    selectedVoice = savedVoice;
+                } else {
+                    selectedVoice = DEFAULT_VOICE;
+                }
+
+                updateVoiceOptions();
                 resetConversationContext();
             }
 
@@ -547,10 +597,61 @@
             loadSettings();
 
             // --- 1. Voice Engine Setup ---
+            
+            function updateVoiceOptions() {
+                const provider = ELEMENTS.voiceProviderSelect.value;
+                const voiceSelect = ELEMENTS.voiceSelect;
+                
+                voiceSelect.innerHTML = '';
+                
+                if (provider === 'openai') {
+                    const openaiVoices = [
+                        { value: 'nova', label: 'Nova (Friendly & Warm)' },
+                        { value: 'alloy', label: 'Alloy (Balanced & Natural)' },
+                        { value: 'echo', label: 'Echo (Clear & Professional)' },
+                        { value: 'shimmer', label: 'Shimmer (Soft & Gentle)' },
+                        { value: 'fable', label: 'Fable (Expressive)' },
+                        { value: 'onyx', label: 'Onyx (Deep & Authoritative)' }
+                    ];
+                    openaiVoices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = voice.value;
+                        option.textContent = voice.label;
+                        voiceSelect.appendChild(option);
+                    });
+                } else if (provider === 'aws-polly') {
+                    const pollyVoices = [
+                        { value: 'Joanna', label: 'Joanna (Female, US)' },
+                        { value: 'Matthew', label: 'Matthew (Male, US)' },
+                        { value: 'Amy', label: 'Amy (Female, UK)' },
+                        { value: 'Brian', label: 'Brian (Male, UK)' }
+                    ];
+                    pollyVoices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = voice.value;
+                        option.textContent = voice.label;
+                        voiceSelect.appendChild(option);
+                    });
+                } else {
+                    const nativeVoices = [
+                        { value: 'native', label: 'System Default' }
+                    ];
+                    nativeVoices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = voice.value;
+                        option.textContent = voice.label;
+                        voiceSelect.appendChild(option);
+                    });
+                }
+                
+                if (selectedVoice) {
+                    voiceSelect.value = selectedVoice;
+                }
+            }
+
             function loadVoices() {
                 const voices = window.speechSynthesis.getVoices();
                 
-                // Priority list for high-quality English voices
                 const preferredVoices = [
                     "Google US English",
                     "Microsoft Aria Online (Natural) - English (United States)",
@@ -562,36 +663,83 @@
 
                 let foundVoice = null;
 
-                // Try to find a preferred voice
                 for (let name of preferredVoices) {
                     foundVoice = voices.find(v => v.name === name);
                     if (foundVoice) break;
                 }
 
-                // Fallback 1: Any "Natural" or "Neural" or "Google" voice
                 if (!foundVoice) {
                     foundVoice = voices.find(v => (v.name.includes('Natural') || v.name.includes('Google')) && v.lang.startsWith('en'));
                 }
 
-                // Fallback 2: Any en-US voice
                 if (!foundVoice) {
                     foundVoice = voices.find(v => v.lang === 'en-US');
                 }
 
-                // Fallback 3: Any English voice
                 if (!foundVoice) {
                     foundVoice = voices.find(v => v.lang.startsWith('en'));
                 }
 
                 if (foundVoice) {
                     activeVoice = foundVoice;
-                    console.log("English voice loaded:", activeVoice.name);
+                    console.log("Native voice loaded:", activeVoice.name);
                 }
             }
 
             loadVoices();
             if (window.speechSynthesis.onvoiceschanged !== undefined) {
                 window.speechSynthesis.onvoiceschanged = loadVoices;
+            }
+
+            async function speak(text) {
+                if (selectedVoiceProvider === 'openai') {
+                    await speakWithPuter(text, 'openai');
+                } else if (selectedVoiceProvider === 'aws-polly') {
+                    await speakWithPuter(text, 'aws-polly');
+                } else {
+                    speakNative(text);
+                }
+            }
+
+            async function speakWithPuter(text, provider) {
+                try {
+                    const options = {
+                        voice: selectedVoice
+                    };
+
+                    if (provider === 'openai') {
+                        options.provider = 'openai';
+                        options.model = 'tts-1';
+                    } else if (provider === 'aws-polly') {
+                        options.provider = 'aws-polly';
+                        options.engine = 'neural';
+                    }
+
+                    console.log(`Speaking with ${provider}, voice: ${selectedVoice}`);
+                    
+                    const audioBlob = await puter.ai.txt2speech(text, options);
+                    
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    
+                    audio.onended = () => {
+                        URL.revokeObjectURL(audioUrl);
+                        finishSpeaking();
+                    };
+                    
+                    audio.onerror = (e) => {
+                        console.error('Audio playback error:', e);
+                        URL.revokeObjectURL(audioUrl);
+                        finishSpeaking();
+                    };
+                    
+                    await audio.play();
+                    
+                } catch (error) {
+                    console.error('TTS error:', error);
+                    appendMessage('system', 'Voice synthesis error, falling back to native voice');
+                    speakNative(text);
+                }
             }
 
             function speakNative(text) {
@@ -758,7 +906,7 @@
 
                 appendMessage('ai', aiMessage);
                 setState(STATE.SPEAKING);
-                speakNative(aiMessage); 
+                speak(aiMessage); 
             }
 
             // --- 5. Event Listeners & Settings UI ---
@@ -794,10 +942,17 @@
                 if (e.target === ELEMENTS.settingsModal) closeSettings();
             });
 
+            // Update voice options when provider changes
+            ELEMENTS.voiceProviderSelect.addEventListener('change', () => {
+                updateVoiceOptions();
+            });
+
             // Save Settings
             ELEMENTS.saveSettingsBtn.addEventListener('click', () => {
                 const newPrompt = ELEMENTS.systemPromptInput.value.trim();
                 const newModel = ELEMENTS.modelSelect.value;
+                const newVoiceProvider = ELEMENTS.voiceProviderSelect.value;
+                const newVoice = ELEMENTS.voiceSelect.value;
 
                 if (newPrompt) {
                     localStorage.setItem('englishAI_prompt', newPrompt);
@@ -806,12 +961,17 @@
                 localStorage.setItem('englishAI_model', newModel);
                 selectedModel = newModel;
 
-                resetConversationContext(); // Reset context with new settings
+                localStorage.setItem('englishAI_voiceProvider', newVoiceProvider);
+                selectedVoiceProvider = newVoiceProvider;
+
+                localStorage.setItem('englishAI_voice', newVoice);
+                selectedVoice = newVoice;
+
+                resetConversationContext();
                 closeSettings();
                 showToast();
 
-                // Add a system message to confirm
-                appendMessage('system', `Settings updated (Model: ${newModel})`);
+                appendMessage('system', `Settings updated (Model: ${newModel}, Voice: ${newVoice})`);
             });
 
             function showToast() {
